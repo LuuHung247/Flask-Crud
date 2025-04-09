@@ -2,16 +2,23 @@ from flask import Flask, render_template, request, url_for, flash
 from werkzeug.utils import redirect
 from flask_mysqldb import MySQL
 
-
 app = Flask(__name__)
 app.secret_key = 'many random bytes'
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'M@tech@pp1234'
+app.config['MYSQL_HOST'] = '35.224.201.175'  # Thay thế bằng IP của VM MariaDB
+app.config['MYSQL_USER'] = 'myuser'  # Sử dụng người dùng mới
+app.config['MYSQL_PASSWORD'] = ''  # KHÔNG CÓ MẬT KHẨU
 app.config['MYSQL_DB'] = 'crud'
 
 mysql = MySQL(app)
+
+try:
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT 1")  # Kiểm tra kết nối
+    print("Kết nối MariaDB thành công!")
+    cur.close()
+except Exception as e:
+    print(f"Lỗi kết nối MariaDB: {e}")
 
 @app.route('/')
 def Index():
@@ -22,8 +29,7 @@ def Index():
 
     return render_template('index.html', students=data)
 
-
-@app.route('/insert', methods = ['POST'])
+@app.route('/insert', methods=['POST'])
 def insert():
     if request.method == "POST":
         flash("Data Inserted Successfully")
@@ -35,7 +41,7 @@ def insert():
         mysql.connection.commit()
         return redirect(url_for('Index'))
 
-@app.route('/delete/<string:id_data>', methods = ['GET'])
+@app.route('/delete/<string:id_data>', methods=['GET'])
 def delete(id_data):
     flash("Record Has Been Deleted Successfully")
     cur = mysql.connection.cursor()
@@ -43,9 +49,7 @@ def delete(id_data):
     mysql.connection.commit()
     return redirect(url_for('Index'))
 
-
-
-@app.route('/update', methods= ['POST', 'GET'])
+@app.route('/update', methods=['POST', 'GET'])
 def update():
     if request.method == 'POST':
         id_data = request.form['id']
@@ -55,14 +59,11 @@ def update():
 
         cur = mysql.connection.cursor()
         cur.execute("""
-        UPDATE students SET name=%s, email=%s, phone=%s
-        WHERE id=%s
-        """, (name, email, phone, id_data))
+            UPDATE students SET name=%s, email=%s, phone=%s
+            WHERE id=%s
+            """, (name, email, phone, id_data))
         flash("Data Updated Successfully")
         return redirect(url_for('Index'))
 
-
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
